@@ -1,0 +1,339 @@
+{
+  "entities": {
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Cài đặt cá nhân hóa giao diện và kết nối API Index-Translate của người dùng.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID của người dùng sở hữu.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "apiBaseUrl": {
+          "type": "string",
+          "description": "URL gốc của API tương thích OpenAI.",
+          "maxLength": 300
+        },
+        "apiModel": {
+          "type": "string",
+          "description": "Tên mô hình dịch sử dụng.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "theme": {
+          "type": "string",
+          "description": "Chế độ giao diện sáng hoặc tối.",
+          "enum": ["light", "dark"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian cập nhật gần nhất."
+        }
+      },
+      "required": ["ownerId", "apiBaseUrl", "apiModel", "theme", "updatedAt"]
+    },
+    "Novel": {
+      "title": "Novel",
+      "description": "Dự án tiểu thuyết cần dịch.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID người tạo dự án.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Tên tiểu thuyết.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "author": {
+          "type": "string",
+          "description": "Tên tác giả.",
+          "maxLength": 150
+        },
+        "sourceLang": {
+          "type": "string",
+          "description": "Mã ngôn ngữ nguồn.",
+          "minLength": 2,
+          "maxLength": 32
+        },
+        "targetLang": {
+          "type": "string",
+          "description": "Mã ngôn ngữ đích.",
+          "minLength": 2,
+          "maxLength": 32
+        },
+        "styleInstruction": {
+          "type": "string",
+          "description": "Chỉ dẫn văn phong mặc định khi dịch.",
+          "maxLength": 1000
+        },
+        "chapterCount": {
+          "type": "integer",
+          "description": "Tổng số chương trong dự án."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian tạo."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian cập nhật."
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "author",
+        "sourceLang",
+        "targetLang",
+        "styleInstruction",
+        "chapterCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Chapter": {
+      "title": "Chapter",
+      "description": "Một chương thuộc dự án tiểu thuyết.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID chủ sở hữu.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "novelId": {
+          "type": "string",
+          "description": "ID dự án tiểu thuyết cha.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Số thứ tự chương."
+        },
+        "titleSource": {
+          "type": "string",
+          "description": "Tiêu đề gốc của chương.",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "titleTranslated": {
+          "type": "string",
+          "description": "Tiêu đề đã dịch.",
+          "maxLength": 300
+        },
+        "status": {
+          "type": "string",
+          "description": "Trạng thái dịch của chương.",
+          "enum": ["draft", "translating", "translated", "reviewed"]
+        },
+        "segmentCount": {
+          "type": "integer",
+          "description": "Tổng số đoạn trong chương."
+        },
+        "translatedCount": {
+          "type": "integer",
+          "description": "Số đoạn đã có bản dịch."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian tạo."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian cập nhật."
+        }
+      },
+      "required": [
+        "ownerId",
+        "novelId",
+        "order",
+        "titleSource",
+        "titleTranslated",
+        "status",
+        "segmentCount",
+        "translatedCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Segment": {
+      "title": "Segment",
+      "description": "Một đoạn văn song ngữ trong chương.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID chủ sở hữu.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "novelId": {
+          "type": "string",
+          "description": "ID tiểu thuyết.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "chapterId": {
+          "type": "string",
+          "description": "ID chương.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "index": {
+          "type": "integer",
+          "description": "Thứ tự đoạn trong chương."
+        },
+        "sourceText": {
+          "type": "string",
+          "description": "Nội dung nguyên tác.",
+          "maxLength": 10000
+        },
+        "translatedText": {
+          "type": "string",
+          "description": "Nội dung bản dịch.",
+          "maxLength": 20000
+        },
+        "note": {
+          "type": "string",
+          "description": "Ghi chú hoặc chỉ dẫn riêng cho đoạn.",
+          "maxLength": 1000
+        },
+        "isReviewed": {
+          "type": "boolean",
+          "description": "Đánh dấu đã hiệu đính."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian cập nhật."
+        }
+      },
+      "required": [
+        "ownerId",
+        "novelId",
+        "chapterId",
+        "index",
+        "sourceText",
+        "translatedText",
+        "note",
+        "isReviewed",
+        "updatedAt"
+      ]
+    },
+    "GlossaryTerm": {
+      "title": "GlossaryTerm",
+      "description": "Cặp thuật ngữ và tên riêng của một bộ tiểu thuyết.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID chủ sở hữu.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "novelId": {
+          "type": "string",
+          "description": "ID tiểu thuyết.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sourceTerm": {
+          "type": "string",
+          "description": "Từ hoặc tên riêng nguyên tác.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "targetTerm": {
+          "type": "string",
+          "description": "Từ dịch chuẩn hóa.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "category": {
+          "type": "string",
+          "description": "Phân loại thuật ngữ.",
+          "enum": ["character", "location", "skill", "other"]
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Bật hoặc tắt áp dụng thuật ngữ khi dịch."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian tạo."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Thời gian cập nhật."
+        }
+      },
+      "required": [
+        "ownerId",
+        "novelId",
+        "sourceTerm",
+        "targetTerm",
+        "category",
+        "enabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/userSettings/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserSettings"
+      },
+      "description": "Cài đặt riêng tư của từng dịch giả."
+    },
+    "/novels/{novelId}": {
+      "schema": {
+        "$ref": "#/entities/Novel"
+      },
+      "description": "Danh sách dự án tiểu thuyết của dịch giả."
+    },
+    "/novels/{novelId}/chapters/{chapterId}": {
+      "schema": {
+        "$ref": "#/entities/Chapter"
+      },
+      "description": "Danh sách chương thuộc một bộ tiểu thuyết."
+    },
+    "/novels/{novelId}/chapters/{chapterId}/segments/{segmentId}": {
+      "schema": {
+        "$ref": "#/entities/Segment"
+      },
+      "description": "Các đoạn văn song ngữ trong một chương."
+    },
+    "/novels/{novelId}/glossaries/{termId}": {
+      "schema": {
+        "$ref": "#/entities/GlossaryTerm"
+      },
+      "description": "Từ điển thuật ngữ gắn với một bộ tiểu thuyết."
+    }
+  }
+}

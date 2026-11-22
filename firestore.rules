@@ -1,0 +1,241 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(ownerId) {
+      return isVerifiedUser() && request.auth.uid == ownerId;
+    }
+
+    function isNovelOwner(novelId) {
+      return exists(/databases/$(database)/documents/novels/$(novelId)) &&
+        get(/databases/$(database)/documents/novels/$(novelId)).data.ownerId == request.auth.uid;
+    }
+
+    // Validation Blueprints
+    function isValidUserSettings(data, userId) {
+      return data.keys().hasAll(['ownerId', 'apiBaseUrl', 'apiModel', 'theme', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'apiBaseUrl', 'apiModel', 'theme', 'updatedAt']) &&
+        data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid && data.ownerId == userId &&
+        data.apiBaseUrl is string && data.apiBaseUrl.size() <= 300 &&
+        data.apiModel is string && data.apiModel.size() >= 1 && data.apiModel.size() <= 100 &&
+        data.theme is string && data.theme in ['light', 'dark'] &&
+        data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function isValidNovel(data) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'author', 'sourceLang', 'targetLang',
+          'styleInstruction', 'chapterCount', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'title', 'author', 'sourceLang', 'targetLang',
+          'styleInstruction', 'chapterCount', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.author is string && data.author.size() <= 150 &&
+        data.sourceLang is string && data.sourceLang.size() >= 2 && data.sourceLang.size() <= 32 &&
+        data.targetLang is string && data.targetLang.size() >= 2 && data.targetLang.size() <= 32 &&
+        data.styleInstruction is string && data.styleInstruction.size() <= 1000 &&
+        data.chapterCount is int && data.chapterCount >= 0 && data.chapterCount <= 10000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function isValidChapter(data, novelId) {
+      return data.keys().hasAll([
+          'ownerId', 'novelId', 'order', 'titleSource', 'titleTranslated',
+          'status', 'segmentCount', 'translatedCount', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'novelId', 'order', 'titleSource', 'titleTranslated',
+          'status', 'segmentCount', 'translatedCount', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid &&
+        data.novelId is string && isValidId(data.novelId) && data.novelId == novelId &&
+        data.order is int && data.order >= 1 && data.order <= 100000 &&
+        data.titleSource is string && data.titleSource.size() >= 1 && data.titleSource.size() <= 300 &&
+        data.titleTranslated is string && data.titleTranslated.size() <= 300 &&
+        data.status is string && data.status in ['draft', 'translating', 'translated', 'reviewed'] &&
+        data.segmentCount is int && data.segmentCount >= 0 && data.segmentCount <= 5000 &&
+        data.translatedCount is int && data.translatedCount >= 0 && data.translatedCount <= 5000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function isValidSegment(data, novelId, chapterId) {
+      return data.keys().hasAll([
+          'ownerId', 'novelId', 'chapterId', 'index', 'sourceText',
+          'translatedText', 'note', 'isReviewed', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'novelId', 'chapterId', 'index', 'sourceText',
+          'translatedText', 'note', 'isReviewed', 'updatedAt'
+        ]) &&
+        data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid &&
+        data.novelId is string && isValidId(data.novelId) && data.novelId == novelId &&
+        data.chapterId is string && isValidId(data.chapterId) && data.chapterId == chapterId &&
+        data.index is int && data.index >= 0 && data.index <= 10000 &&
+        data.sourceText is string && data.sourceText.size() <= 10000 &&
+        data.translatedText is string && data.translatedText.size() <= 20000 &&
+        data.note is string && data.note.size() <= 1000 &&
+        data.isReviewed is bool &&
+        data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function isValidGlossaryTerm(data, novelId) {
+      return data.keys().hasAll([
+          'ownerId', 'novelId', 'sourceTerm', 'targetTerm',
+          'category', 'enabled', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'novelId', 'sourceTerm', 'targetTerm',
+          'category', 'enabled', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid &&
+        data.novelId is string && isValidId(data.novelId) && data.novelId == novelId &&
+        data.sourceTerm is string && data.sourceTerm.size() >= 1 && data.sourceTerm.size() <= 200 &&
+        data.targetTerm is string && data.targetTerm.size() >= 1 && data.targetTerm.size() <= 200 &&
+        data.category is string && data.category in ['character', 'location', 'skill', 'other'] &&
+        data.enabled is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    // User Settings
+    match /userSettings/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUserSettings(incoming(), userId);
+      allow update: if isValidId(userId) && isOwner(userId) && isValidUserSettings(incoming(), userId) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['apiBaseUrl', 'apiModel', 'theme', 'updatedAt']);
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    // Novels
+    match /novels/{novelId} {
+      allow get: if isValidId(novelId) && isVerifiedUser() && existing().ownerId == request.auth.uid;
+      allow list: if isVerifiedUser() && existing().ownerId == request.auth.uid;
+      allow create: if isValidId(novelId) && isVerifiedUser() && isValidNovel(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if isValidId(novelId) && isVerifiedUser() && existing().ownerId == request.auth.uid &&
+        isValidNovel(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'author', 'sourceLang', 'targetLang', 'styleInstruction', 'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['chapterCount', 'updatedAt'])
+        );
+      allow delete: if isValidId(novelId) && isVerifiedUser() && existing().ownerId == request.auth.uid;
+
+      // Chapters Subcollection
+      match /chapters/{chapterId} {
+        allow get: if isValidId(novelId) && isValidId(chapterId) && isVerifiedUser() &&
+          existing().ownerId == request.auth.uid && isNovelOwner(novelId);
+        allow list: if isVerifiedUser() && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(novelId) && isValidId(chapterId) && isVerifiedUser() &&
+          isValidChapter(incoming(), novelId) &&
+          incoming().createdAt == request.time &&
+          isNovelOwner(novelId);
+        allow update: if isValidId(novelId) && isValidId(chapterId) && isVerifiedUser() &&
+          existing().ownerId == request.auth.uid &&
+          isValidChapter(incoming(), novelId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().novelId == existing().novelId &&
+          incoming().createdAt == existing().createdAt &&
+          isNovelOwner(novelId) && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'order', 'titleSource', 'titleTranslated', 'status', 'updatedAt'
+            ]) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'translatedCount', 'segmentCount', 'updatedAt'
+            ]) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'titleTranslated', 'status', 'translatedCount', 'updatedAt'
+            ])
+          );
+        allow delete: if isValidId(novelId) && isValidId(chapterId) && isVerifiedUser() &&
+          existing().ownerId == request.auth.uid && isNovelOwner(novelId);
+
+        // Segments Subcollection
+        match /segments/{segmentId} {
+          allow get: if isValidId(novelId) && isValidId(chapterId) && isValidId(segmentId) &&
+            isVerifiedUser() && existing().ownerId == request.auth.uid && isNovelOwner(novelId);
+          allow list: if isVerifiedUser() && existing().ownerId == request.auth.uid;
+          allow create: if isValidId(novelId) && isValidId(chapterId) && isValidId(segmentId) &&
+            isVerifiedUser() && isValidSegment(incoming(), novelId, chapterId) &&
+            isNovelOwner(novelId) &&
+            existsAfter(/databases/$(database)/documents/novels/$(novelId)/chapters/$(chapterId));
+          allow update: if isValidId(novelId) && isValidId(chapterId) && isValidId(segmentId) &&
+            isVerifiedUser() && existing().ownerId == request.auth.uid &&
+            isValidSegment(incoming(), novelId, chapterId) &&
+            incoming().ownerId == existing().ownerId &&
+            incoming().novelId == existing().novelId &&
+            incoming().chapterId == existing().chapterId &&
+            isNovelOwner(novelId) && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['translatedText', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly(['sourceText', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly(['note', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly(['isReviewed', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly(['translatedText', 'isReviewed', 'updatedAt'])
+            );
+          allow delete: if isValidId(novelId) && isValidId(chapterId) && isValidId(segmentId) &&
+            isVerifiedUser() && existing().ownerId == request.auth.uid && isNovelOwner(novelId);
+        }
+      }
+
+      // Glossaries Subcollection
+      match /glossaries/{termId} {
+        allow get: if isValidId(novelId) && isValidId(termId) && isVerifiedUser() &&
+          existing().ownerId == request.auth.uid && isNovelOwner(novelId);
+        allow list: if isVerifiedUser() && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(novelId) && isValidId(termId) && isVerifiedUser() &&
+          isValidGlossaryTerm(incoming(), novelId) &&
+          incoming().createdAt == request.time &&
+          isNovelOwner(novelId);
+        allow update: if isValidId(novelId) && isValidId(termId) && isVerifiedUser() &&
+          existing().ownerId == request.auth.uid &&
+          isValidGlossaryTerm(incoming(), novelId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().novelId == existing().novelId &&
+          incoming().createdAt == existing().createdAt &&
+          isNovelOwner(novelId) && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'sourceTerm', 'targetTerm', 'category', 'enabled', 'updatedAt'
+            ]) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['enabled', 'updatedAt'])
+          );
+        allow delete: if isValidId(novelId) && isValidId(termId) && isVerifiedUser() &&
+          existing().ownerId == request.auth.uid && isNovelOwner(novelId);
+      }
+    }
+  }
+}

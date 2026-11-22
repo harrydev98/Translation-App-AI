@@ -1,0 +1,78 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-serif: 'Source Serif 4', 'Noto Serif', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --ui-font-size: 16px;
+    --literary-size: 17px;
+    --literary-leading: 1.75;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-size: var(--ui-font-size, 16px);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #FAF7F2;
+    color: #1F1C18;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html.dark body {
+    background-color: #141210;
+    color: #EDE8DF;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-literary {
+  font-family: var(--font-serif);
+}
+
+.font-literary-prose {
+  font-family: var(--font-serif);
+  font-size: var(--literary-size, 17px);
+  line-height: var(--literary-leading, 1.75);
+}
+
+.font-literary-reader {
+  font-family: var(--font-serif);
+  font-size: calc(var(--literary-size, 17px) + 1px);
+  line-height: calc(var(--literary-leading, 1.75) + 0.1);
+}
+
+.font-mono-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.font-preview-plus-jakarta { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+.font-preview-be-vietnam { font-family: 'Be Vietnam Pro', system-ui, sans-serif; }
+.font-preview-manrope { font-family: 'Manrope', system-ui, sans-serif; }
+.font-preview-public-sans { font-family: 'Public Sans', system-ui, sans-serif; }
+.font-preview-fraunces { font-family: 'Fraunces', Georgia, serif; }
+.font-preview-playfair { font-family: 'Playfair Display', Georgia, serif; }
+.font-preview-cormorant { font-family: 'Cormorant Garamond', Georgia, serif; }
+.font-preview-source-serif { font-family: 'Source Serif 4', 'Noto Serif', Georgia, serif; }
+.font-preview-lora { font-family: 'Lora', 'Noto Serif', Georgia, serif; }
+.font-preview-noto-serif { font-family: 'Noto Serif', 'Songti SC', Georgia, serif; }
+.font-preview-merriweather { font-family: 'Merriweather', 'Noto Serif', Georgia, serif; }
+.font-preview-jetbrains-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.font-preview-ibm-plex-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

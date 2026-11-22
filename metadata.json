@@ -1,0 +1,8 @@
+{
+  "name": "Mặc Vận — Studio Dịch Thuật Tiểu Thuyết",
+  "description": "Ứng dụng dịch thuật và biên tập tiểu thuyết đa ngôn ngữ sử dụng mô hình Index-Translate-9B, hỗ trợ từ điển thuật ngữ, dịch streaming theo đoạn, đối chiếu song ngữ và đồng bộ đám mây.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
